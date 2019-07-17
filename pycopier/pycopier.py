@@ -1,20 +1,20 @@
+'''
+Brief:
+    pycopier.py - Main implementation for PyCopier.
+
+Author(s):
+    Charles Machalow (MIT License)
+'''
 import os
 import shutil
 import sys
-import time
 import threading
-
-from multiprocessing.pool import ThreadPool
+import time
 from multiprocessing import TimeoutError
-
-# Use the built-in version of scandir/walk if possible, otherwise
-# use the scandir module version
-try:
-    from os import scandir, walk
-except ImportError:
-    from scandir import scandir, walk
+from multiprocessing.pool import ThreadPool
 
 import humanize
+from scandir import scandir, walk
 
 class PyCopier(object):
     def __init__(self, source, destination, numWorkers=16, bufferSize=8192, reportingTimeDelta=.1, zeroLengthFiles=False,
@@ -150,7 +150,7 @@ class PyCopier(object):
 
         results = []
 
-        for root, dirs, files in walk(self.source):
+        for root, dirs, files in scandir(self.source):
             self.checkAndPrintSpeedIfNeeded()
 
             destDir = os.path.join(self.destination, os.path.relpath(root, self.source))
