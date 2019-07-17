@@ -40,6 +40,11 @@ class PyCopier(object):
         self.copiedDataBytesLock = threading.Lock()
         self.numberOfPurgedFilesLock = threading.Lock()
         self.numberOfSkippedCopiesLock = threading.Lock()
+
+        # for reporting current speed
+        self._nextReportTime = 0
+        self._reportedDataBytes = 0
+
         self._done = True
 
     def copyFile(self, source, destination):
@@ -128,6 +133,14 @@ class PyCopier(object):
         with self.numberOfSkippedCopiesLock:
             return self.numberOfSkippedCopies
 
+    def checkAndPrintSpeedIfNeeded(self):
+        if time.time() > self._nextReportTime:
+            copiedDataBytes = self.getCopiedDataBytes()
+            deltaBytes = copiedDataBytes - self._reportedDataBytes
+            sys.stdout.write("\rSpeed: ~%s per second".ljust(50) % (humanize.naturalsize(float(deltaBytes) / self.reportingTimeDelta)))
+            self._reportedDataBytes += deltaBytes
+            self._nextReportTime = time.time() + self.reportingTimeDelta
+
     def _submitOperations(self):
         if self._done:
             self.pool = ThreadPool(processes=self.numWorkers)
@@ -138,6 +151,8 @@ class PyCopier(object):
         results = []
 
         for root, dirs, files in walk(self.source):
+            self.checkAndPrintSpeedIfNeeded()
+
             destDir = os.path.join(self.destination, os.path.relpath(root, self.source))
 
             if self.purgeDestination:
@@ -167,7 +182,7 @@ class PyCopier(object):
                 results.append(self.pool.apply_async(self.copyFile, (fullSrcPath, destFile,)))
                 # todo... what if results is really long? Should we clear them as we go?
 
-        print ("Operation submission complete!")
+        sys.stdout.write("\rOperation submission complete!              \n")
 
         return results
 
@@ -176,22 +191,16 @@ class PyCopier(object):
         self.copiedDataBytes = 0
         self.numberOfPurgedFiles = 0
         self.numberOfSkippedCopies = 0
+        self._reportedDataBytes = 0
+        self._nextReportTime = 0
 
         results = self._submitOperations()
 
         nextReportTime = time.time() + self.reportingTimeDelta
-        knownCopiedDataBytes = 0
         sys.stdout.write('\n')
         for idx, itm in enumerate(results):
             while True:
-
-                if time.time() > nextReportTime:
-                    copiedDataBytes = self.getCopiedDataBytes()
-                    deltaBytes = copiedDataBytes - knownCopiedDataBytes
-                    sys.stdout.write("\rSpeed: ~%s per second".ljust(50) % (humanize.naturalsize(float(deltaBytes) / self.reportingTimeDelta)))
-                    knownCopiedDataBytes += deltaBytes
-                    nextReportTime = time.time() + self.reportingTimeDelta
-
+                self.checkAndPrintSpeedIfNeeded()
                 try:
                     itm.get(timeout=.001)
                     break
@@ -217,3 +226,50 @@ class PyCopier(object):
             print ("Purged File Count:   %d" % self.getPurgedFileCount())
         if self.skipSameLookingFiles:
             print ("Skipped Copy Count:  %d" % self.getSkippedCopiesCount())
+
+if __name__ == '__main__':
+    p = PyCopier(r"C:\Users\csm10495\Documents\Torrenting", r"E:\Torrenting", reportingTimeDelta=.1, numWorkers=8,
+                 purgeDestination=0, copyPermissions=True, bufferSize=1024*32, skipSameLookingFiles=True,
+                 ignoreErrorOnCopy=True)
+
+    p.execute()
+
+    print ('-' * 40)
+
+    p = PyCopier(r"C:\Users\csm10495\Documents\Torrenting", r"E:\Torrenting2", reportingTimeDelta=.5, numWorkers=8,
+                 purgeDestination=0, copyPermissions=True, bufferSize=1024*32, skipSameLookingFiles=True,
+                 ignoreErrorOnCopy=True)
+
+    p.execute()
+
+    print ('-' * 40)
+
+    p = PyCopier(r"C:\Users\csm10495\Documents\Torrenting", r"E:\Torrenting3", reportingTimeDelta=.1, numWorkers=16,
+                 purgeDestination=0, copyPermissions=True, bufferSize=1024*32, skipSameLookingFiles=False,
+                 ignoreErrorOnCopy=True)
+
+    p.execute()
+
+    print ('-' * 40)
+
+    p = PyCopier(r"C:\Users\csm10495\Documents\Torrenting", r"E:\Torrenting4", reportingTimeDelta=.1, numWorkers=16,
+                 purgeDestination=0, copyPermissions=True, bufferSize=1024*32, skipSameLookingFiles=True,
+                 ignoreErrorOnCopy=True)
+
+    p.execute()
+
+    print ('-' * 40)
+
+    p = PyCopier(r"C:\Users\csm10495\Documents\Torrenting", r"E:\Torrenting4", reportingTimeDelta=.1, numWorkers=16,
+                 purgeDestination=0, copyPermissions=True, bufferSize=1024*32, skipSameLookingFiles=True,
+                 ignoreErrorOnCopy=True)
+
+    p.execute()
+
+    print ('-' * 40)
+
+    p = PyCopier(r"C:\Users\csm10495\Documents\Torrenting", r"E:\Torrenting5", reportingTimeDelta=.1, numWorkers=16,
+                 purgeDestination=0, copyPermissions=False, bufferSize=1024*32, skipSameLookingFiles=True,
+                 ignoreErrorOnCopy=True)
+
+    p.execute()
