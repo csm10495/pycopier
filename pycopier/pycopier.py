@@ -228,48 +228,4 @@ class PyCopier(object):
             print ("Skipped Copy Count:  %d" % self.getSkippedCopiesCount())
 
 if __name__ == '__main__':
-    p = PyCopier(r"C:\Users\csm10495\Documents\Torrenting", r"E:\Torrenting", reportingTimeDelta=.1, numWorkers=8,
-                 purgeDestination=0, copyPermissions=True, bufferSize=1024*32, skipSameLookingFiles=True,
-                 ignoreErrorOnCopy=True)
-
-    p.execute()
-
-    print ('-' * 40)
-
-    p = PyCopier(r"C:\Users\csm10495\Documents\Torrenting", r"E:\Torrenting2", reportingTimeDelta=.5, numWorkers=8,
-                 purgeDestination=0, copyPermissions=True, bufferSize=1024*32, skipSameLookingFiles=True,
-                 ignoreErrorOnCopy=True)
-
-    p.execute()
-
-    print ('-' * 40)
-
-    p = PyCopier(r"C:\Users\csm10495\Documents\Torrenting", r"E:\Torrenting3", reportingTimeDelta=.1, numWorkers=16,
-                 purgeDestination=0, copyPermissions=True, bufferSize=1024*32, skipSameLookingFiles=False,
-                 ignoreErrorOnCopy=True)
-
-    p.execute()
-
-    print ('-' * 40)
-
-    p = PyCopier(r"C:\Users\csm10495\Documents\Torrenting", r"E:\Torrenting4", reportingTimeDelta=.1, numWorkers=16,
-                 purgeDestination=0, copyPermissions=True, bufferSize=1024*32, skipSameLookingFiles=True,
-                 ignoreErrorOnCopy=True)
-
-    p.execute()
-
-    print ('-' * 40)
-
-    p = PyCopier(r"C:\Users\csm10495\Documents\Torrenting", r"E:\Torrenting4", reportingTimeDelta=.1, numWorkers=16,
-                 purgeDestination=0, copyPermissions=True, bufferSize=1024*32, skipSameLookingFiles=True,
-                 ignoreErrorOnCopy=True)
-
-    p.execute()
-
-    print ('-' * 40)
-
-    p = PyCopier(r"C:\Users\csm10495\Documents\Torrenting", r"E:\Torrenting5", reportingTimeDelta=.1, numWorkers=16,
-                 purgeDestination=0, copyPermissions=False, bufferSize=1024*32, skipSameLookingFiles=True,
-                 ignoreErrorOnCopy=True)
-
-    p.execute()
+    pass
