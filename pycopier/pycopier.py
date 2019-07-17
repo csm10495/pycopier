@@ -47,7 +47,7 @@ class PyCopier(object):
 
         self._done = True
 
-    def copyFile(self, source, destination):
+    def _copyFile(self, source, destination):
         copiedDataLength = 0
 
         if self.skipSameLookingFiles:
@@ -95,7 +95,7 @@ class PyCopier(object):
 
         self.addCopiedDataBytes(copiedDataLength)
 
-    def cleanDestinationDirectory(self, destinationDirectory, srcListing):
+    def _cleanDestinationDirectory(self, destinationDirectory, srcListing):
         count = 0
         for path in os.listdir(destinationDirectory):
             if path not in srcListing:
@@ -156,7 +156,7 @@ class PyCopier(object):
             destDir = os.path.join(self.destination, os.path.relpath(root, self.source))
 
             if self.purgeDestination:
-                results.append(self.pool.apply_async(self.cleanDestinationDirectory, (destDir, set(files + dirs),)))
+                results.append(self.pool.apply_async(self._cleanDestinationDirectory, (destDir, set(files + dirs),)))
 
             if len(files) == 0 and len(dirs) == 0 and self.ignoreEmptyDirectories:
                 continue
@@ -179,7 +179,7 @@ class PyCopier(object):
             for file in files:
                 fullSrcPath = os.path.join(root, file)
                 destFile = os.path.join(destDir, file)
-                results.append(self.pool.apply_async(self.copyFile, (fullSrcPath, destFile,)))
+                results.append(self.pool.apply_async(self.__copyFile, (fullSrcPath, destFile,)))
                 # todo... what if results is really long? Should we clear them as we go?
 
         sys.stdout.write("\rOperation submission complete!              \n")
