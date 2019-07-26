@@ -14,7 +14,7 @@ from multiprocessing import TimeoutError
 from multiprocessing.pool import ThreadPool
 
 import humanize
-from scandir import scandir, walk
+from scandir import walk
 
 class PyCopier(object):
     def __init__(self, source, destination, numWorkers=16, bufferSize=8192, reportingTimeDelta=.1, zeroLengthFiles=False,
@@ -150,7 +150,7 @@ class PyCopier(object):
 
         results = []
 
-        for root, dirs, files in scandir(self.source):
+        for root, dirs, files in walk(self.source):
             self.checkAndPrintSpeedIfNeeded()
 
             destDir = os.path.join(self.destination, os.path.relpath(root, self.source))
@@ -179,7 +179,7 @@ class PyCopier(object):
             for file in files:
                 fullSrcPath = os.path.join(root, file)
                 destFile = os.path.join(destDir, file)
-                results.append(self.pool.apply_async(self.__copyFile, (fullSrcPath, destFile,)))
+                results.append(self.pool.apply_async(self._copyFile, (fullSrcPath, destFile,)))
                 # todo... what if results is really long? Should we clear them as we go?
 
         sys.stdout.write("\rOperation submission complete!              \n")
@@ -229,3 +229,18 @@ class PyCopier(object):
 
 if __name__ == '__main__':
     pass
+
+    ''' ... wip
+    import argparse
+    parser = argparse.ArgumentParser(prefix_chars='/')
+    parser.add_argument('/MT', type=int)
+
+    import pdb;pdb.set_trace()
+    for idx, arg in enumerate(sys.argv):
+        if arg.startswith('/MT:') and arg.count(':') == 1:
+            sys.argv[idx] = '/MT'
+            sys.argv.insert(idx + 1, arg.split(':')[-1])
+
+    args = parser.parse_args()
+    print (args)
+    '''
