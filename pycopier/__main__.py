@@ -22,7 +22,7 @@ def coerceArgsToArgparseCompatible(args):
 
     return args
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(prefix_chars='/', usage="\n" + pycopier.ASCII_ART + "\n ... a Python 3 replacement for Robocopy, including multithreaded copy.")
 
     arg_group_robocopy = parser.add_argument_group("Robocopy Arguments", "Arguments that more/less match Robocopy")
@@ -65,3 +65,6 @@ if __name__ == '__main__':
     # todo: need to check for errors and keep track of them in PyCopier object
     #    based off that change the error code to 8
     sys.exit(1)
+
+if __name__ == '__main__':
+    main()
