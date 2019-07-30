@@ -11,7 +11,7 @@ import time
 
 THIS_DIRECTORY = os.path.abspath(os.path.dirname(__file__))
 
-from ..pycopier import PyCopier
+from pycopier.pycopier import PyCopier
 
 class _TestDirectory(object):
     '''
@@ -129,24 +129,93 @@ class _TestDirectory(object):
         myDirCmp = filecmp.dircmp(self.sourceDirectory, destinationDirectory)
         return self._dirCmpMatch(myDirCmp, shallow, checkPermissions, zeroLengthFiles, move, ignoreExtraRight)
 
-class PyCopierFunctionalTests(unittest.TestCase):
-    '''
-    functional-style tests
-    '''
+class PyCopierTestBase(object):
     @contextlib.contextmanager
-    def getNewDestinationDirectory(self):
+    def getNewDestination(self):
         dest = os.path.join(THIS_DIRECTORY, str(random.randint(0, 0xFFFFFFFF)))
         try:
             yield dest
         finally:
             if os.path.isdir(dest):
                 shutil.rmtree(dest)
+            elif os.path.isfile(dest):
+                os.remove(dest)
 
+class PyCopierUnitTests(unittest.TestCase, PyCopierTestBase):
+    '''
+    unit-style tests
+    '''
+    def test_generic_copy_file(self):
+        p = PyCopier(source=None, destination=None)
+        with self.getNewDestination() as dest:
+            p._copyFile(__file__, dest)
+            assert os.path.isfile(dest)
+            assert filecmp.cmp(__file__, dest, shallow=False)
+
+        assert p.getCopiedDataBytes() == os.path.getsize(__file__)
+        assert p.getSkippedCopiesCount() == 0
+
+    def test_skip_same_looking_file(self):
+        p = PyCopier(source=None, destination=None, skipSameLookingFiles=True)
+        with self.getNewDestination() as dest:
+            shutil.copy2(__file__, dest)
+            p._copyFile(__file__, dest)
+
+        assert p.getSkippedCopiesCount() == 1
+        assert p.getCopiedDataBytes() == 0
+
+    def test_skip_same_looking_file_doesnt_happen_if_meta_doesnt_match(self):
+        p = PyCopier(source=None, destination=None, skipSameLookingFiles=True)
+        with self.getNewDestination() as dest:
+            shutil.copy(__file__, dest)
+            p._copyFile(__file__, dest)
+
+        assert p.getSkippedCopiesCount() == 0
+        assert p.getCopiedDataBytes() == os.path.getsize(__file__)
+
+    def test_errors_ignored_on_copy(self):
+        p = PyCopier(source=None, destination=None, ignoreErrorOnCopy=True)
+        with self.getNewDestination() as dest:
+            p._copyFile("/fake/file", dest)
+
+        # nothing raised... nothing copied
+        assert p.getSkippedCopiesCount() == 0
+        assert p.getCopiedDataBytes() == 0
+
+    def test_errors_not_ignored_on_copy(self):
+        p = PyCopier(source=None, destination=None, ignoreErrorOnCopy=False)
+        with self.getNewDestination() as dest:
+            with pytest.raises(Exception):
+                p._copyFile("/fake/file", dest)
+
+        # nothing raised... nothing copied
+        assert p.getSkippedCopiesCount() == 0
+        assert p.getCopiedDataBytes() == 0
+
+    def test_cleaning_directory(self):
+        p = PyCopier(source=None, destination=None, ignoreErrorOnCopy=False)
+        with _TestDirectory() as t:
+            t.create()
+
+            # count files
+            numFiles = 0
+            for path, dirs, files in os.walk(t.sourceDirectory):
+                numFiles += len(files)
+
+            p._cleanDestinationDirectory(t.sourceDirectory, [])
+
+        # nothing raised... nothing copied
+        assert p.getPurgedFileCount() == numFiles
+
+class PyCopierFunctionalTests(unittest.TestCase, PyCopierTestBase):
+    '''
+    functional-style tests
+    '''
     def test_generic_copy_various_worker_count(self):
         for numWorkers in range(1, 16):
             with _TestDirectory() as t:
                 t.create()
-                with self.getNewDestinationDirectory() as dest:
+                with self.getNewDestination() as dest:
                     PyCopier(t.sourceDirectory, dest, numWorkers=numWorkers).execute()
                     assert t.checkMatch(dest)
 
@@ -154,35 +223,35 @@ class PyCopierFunctionalTests(unittest.TestCase):
         for bufferSize in [1024, 4096, 8192, 1, 2]:
             with _TestDirectory() as t:
                 t.create()
-                with self.getNewDestinationDirectory() as dest:
+                with self.getNewDestination() as dest:
                     PyCopier(t.sourceDirectory, dest, bufferSize=bufferSize).execute()
                     assert t.checkMatch(dest)
 
     def test_zero_length_copy(self):
         with _TestDirectory() as t:
             t.create()
-            with self.getNewDestinationDirectory() as dest:
+            with self.getNewDestination() as dest:
                 PyCopier(t.sourceDirectory, dest, zeroLengthFiles=True).execute()
                 assert t.checkMatch(dest, zeroLengthFiles=True)
 
     def test_permission_copy(self):
         with _TestDirectory() as t:
             t.create()
-            with self.getNewDestinationDirectory() as dest:
+            with self.getNewDestination() as dest:
                 PyCopier(t.sourceDirectory, dest, copyPermissions=True).execute()
                 assert t.checkMatch(dest, checkPermissions=True)
 
     def test_move(self):
         with _TestDirectory() as t:
             t.create()
-            with self.getNewDestinationDirectory() as dest:
+            with self.getNewDestination() as dest:
                 PyCopier(t.sourceDirectory, dest, move=True).execute()
                 assert t.checkMatch(dest, move=True)
 
     def test_purge_destination(self):
         with _TestDirectory() as t:
             t.create()
-            with self.getNewDestinationDirectory() as dest:
+            with self.getNewDestination() as dest:
                 os.mkdir(dest)
                 fileThatShouldBePurged = os.path.join(dest, 'test_tmp')
                 with open(fileThatShouldBePurged, 'w') as f:

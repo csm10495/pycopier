@@ -12,8 +12,13 @@ import threading
 import time
 from multiprocessing import TimeoutError
 from multiprocessing.pool import ThreadPool
+import warnings
 
-import humanize
+# don't show warnings in humaize
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
+    import humanize
+
 from scandir import walk
 
 class PyCopier(object):
@@ -104,8 +109,8 @@ class PyCopier(object):
                     os.remove(fullPath)
                     count += 1
                 elif os.path.isdir(fullPath):
-                    shutil.rmtree(fullPath, ignore_errors=True)
-                    count += 1
+                    # clear all, but also counts all
+                    self._cleanDestinationDirectory(fullPath, [])
 
         self.addToPurgedFileCount(count)
 
@@ -174,7 +179,8 @@ class PyCopier(object):
                     ''' todo: why does this happen?
                     FileNotFoundError: [WinError 2] The system cannot find the file specified: 'E:\\csm10495\\AppData\\Local\\Packages\\CanonicalGroupLimited.UbuntuonWindows_79rhkp1fndgsc\\LocalState\\rootfs\\home\\csm10495\\cling-build\\cling-src\\tools\\clang\\test\\Driver\\Inputs\\gentoo_linux_gcc_multi_version_tree\\usr\\lib\\gcc\\x86_64-pc-linux-gnu\\4.9.3\\32'
                     '''
-                    pass
+                    if not self.ignoreErrorOnCopy:
+                        raise
 
             for file in files:
                 fullSrcPath = os.path.join(root, file)
