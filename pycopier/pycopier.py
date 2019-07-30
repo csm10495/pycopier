@@ -282,17 +282,3 @@ class PyCopier(object):
 if __name__ == '__main__':
     pass
 
-    ''' ... wip
-    import argparse
-    parser = argparse.ArgumentParser(prefix_chars='/')
-    parser.add_argument('/MT', type=int)
-
-    import pdb;pdb.set_trace()
-    for idx, arg in enumerate(sys.argv):
-        if arg.startswith('/MT:') and arg.count(':') == 1:
-            sys.argv[idx] = '/MT'
-            sys.argv.insert(idx + 1, arg.split(':')[-1])
-
-    args = parser.parse_args()
-    print (args)
-    '''
