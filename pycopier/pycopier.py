@@ -6,6 +6,7 @@ Author(s):
     Charles Machalow (MIT License)
 '''
 import os
+import re
 import shutil
 import sys
 import threading
@@ -21,10 +22,21 @@ with warnings.catch_warnings():
 
 from scandir import walk
 
+__version__ = '1.0.0'
+
+ASCII_ART = r'''
+    ____        ______            _
+   / __ \__  __/ ____/___  ____  (_)__  _____
+  / /_/ / / / / /   / __ \/ __ \/ / _ \/ ___/
+ / ____/ /_/ / /___/ /_/ / /_/ / /  __/ /
+/_/    \__, /\____/\____/ .___/_/\___/_/
+      /____/           /_/                   %s
+''' % __version__
+
 class PyCopier(object):
     def __init__(self, source, destination, numWorkers=16, bufferSize=8192, reportingTimeDelta=.1, zeroLengthFiles=False,
                 ignoreEmptyDirectories=False, copyPermissions=False, move=False, purgeDestination=False, skipSameLookingFiles=False,
-                ignoreErrorOnCopy=False):
+                ignoreErrorOnCopy=False, quiet=False):
         self.source = source
         self.destination = destination
 
@@ -38,6 +50,7 @@ class PyCopier(object):
         self.purgeDestination = purgeDestination
         self.skipSameLookingFiles = skipSameLookingFiles
         self.ignoreErrorOnCopy = ignoreErrorOnCopy
+        self.quiet = quiet
 
         self.copiedDataBytes = 0
         self.numberOfPurgedFiles = 0
@@ -51,6 +64,26 @@ class PyCopier(object):
         self._reportedDataBytes = 0
 
         self._done = True
+
+    @classmethod
+    def __camelCaseToTitleCaseWithSpaces(cls, s):
+        return ' '.join([a.title() for a in re.sub( r"([A-Z])", r" \1", s).split()])
+
+    def __str__(self):
+        d = {}
+        for name in sorted(dir(self)):
+            thing = getattr(self, name)
+            if not name.startswith('_') and isinstance(thing, (int, bool, str)):
+                d[self.__camelCaseToTitleCaseWithSpaces(name)] = thing
+
+        # now go through d and print
+        longestName = max([len(x) for x in d.keys()]) + 1
+
+        retStr = ''
+        for key, value in d.items():
+            retStr += key.ljust(longestName) + ": " + str(value) + "\n"
+
+        return retStr
 
     def _copyFile(self, source, destination):
         copiedDataLength = 0
@@ -142,7 +175,8 @@ class PyCopier(object):
         if time.time() > self._nextReportTime:
             copiedDataBytes = self.getCopiedDataBytes()
             deltaBytes = copiedDataBytes - self._reportedDataBytes
-            sys.stdout.write("\rSpeed: ~%s per second".ljust(50) % (humanize.naturalsize(float(deltaBytes) / self.reportingTimeDelta)))
+            if not self.quiet:
+                sys.stdout.write("\rSpeed: ~%s per second".ljust(50) % (humanize.naturalsize(float(deltaBytes) / self.reportingTimeDelta)))
             self._reportedDataBytes += deltaBytes
             self._nextReportTime = time.time() + self.reportingTimeDelta
 
@@ -151,7 +185,8 @@ class PyCopier(object):
             self.pool = ThreadPool(processes=self.numWorkers)
             self._done = False
 
-        print ("Submitting Operations for %s -> %s" % (self.source, self.destination))
+        if not self.quiet:
+            print ("Submitting Operations for %s -> %s" % (self.source, self.destination))
 
         results = []
 
@@ -188,11 +223,16 @@ class PyCopier(object):
                 results.append(self.pool.apply_async(self._copyFile, (fullSrcPath, destFile,)))
                 # todo... what if results is really long? Should we clear them as we go?
 
-        sys.stdout.write("\rOperation submission complete!              \n")
+        if not self.quiet:
+            sys.stdout.write("\rOperation submission complete!              \n")
 
         return results
 
     def execute(self):
+        if not self.quiet:
+            print (ASCII_ART)
+            print (str(self))
+
         startTime = time.time()
         self.copiedDataBytes = 0
         self.numberOfPurgedFiles = 0
@@ -203,7 +243,10 @@ class PyCopier(object):
         results = self._submitOperations()
 
         nextReportTime = time.time() + self.reportingTimeDelta
-        sys.stdout.write('\n')
+
+        if not self.quiet:
+            sys.stdout.write('\n')
+
         for idx, itm in enumerate(results):
             while True:
                 self.checkAndPrintSpeedIfNeeded()
@@ -213,7 +256,8 @@ class PyCopier(object):
                 except TimeoutError:
                     pass
 
-        sys.stdout.write('\n')
+        if not self.quiet:
+            sys.stdout.write('\n')
 
         self.pool.close()
         self.pool.join()
@@ -224,14 +268,16 @@ class PyCopier(object):
         self._done = True
 
         endTime = time.time()
-        print ("-" * 20)
-        print ("Total Runtime:       %.2f seconds" % (endTime - startTime))
-        print ("Total Data Copied:   %s" % (humanize.naturalsize(self.getCopiedDataBytes())))
-        print ("Avg Speed:           %s per second" % (humanize.naturalsize(self.getCopiedDataBytes() / (endTime - startTime))))
-        if self.purgeDestination:
-            print ("Purged File Count:   %d" % self.getPurgedFileCount())
-        if self.skipSameLookingFiles:
-            print ("Skipped Copy Count:  %d" % self.getSkippedCopiesCount())
+
+        if not self.quiet:
+            print ("-" * 20)
+            print ("Total Runtime:       %.2f seconds" % (endTime - startTime))
+            print ("Total Data Copied:   %s" % (humanize.naturalsize(self.getCopiedDataBytes())))
+            print ("Avg Speed:           %s per second" % (humanize.naturalsize(self.getCopiedDataBytes() / (endTime - startTime))))
+            if self.purgeDestination:
+                print ("Purged File Count:   %d" % self.getPurgedFileCount())
+            if self.skipSameLookingFiles:
+                print ("Skipped Copy Count:  %d" % self.getSkippedCopiesCount())
 
 if __name__ == '__main__':
     pass

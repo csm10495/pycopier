@@ -1,17 +1,20 @@
 import contextlib
 import filecmp
+import io
 import os
-import scandir
-import sys
-import shutil
 import random
-import pytest
-import unittest
+import shutil
+import sys
 import time
+import unittest
+
+import pytest
+import scandir
+
+from pycopier.pycopier import PyCopier
 
 THIS_DIRECTORY = os.path.abspath(os.path.dirname(__file__))
 
-from pycopier.pycopier import PyCopier
 
 class _TestDirectory(object):
     '''
@@ -265,3 +268,14 @@ class PyCopierFunctionalTests(unittest.TestCase, PyCopierTestBase):
                 assert not os.path.exists(fileThatShouldBePurged)
                 assert t.checkMatch(dest)
 
+    def test_quiet_param(self):
+        with _TestDirectory() as t:
+            t.create()
+            output = io.StringIO()
+            with self.getNewDestination() as dest:
+                with contextlib.redirect_stdout(output), contextlib.redirect_stderr(output):
+                    PyCopier(t.sourceDirectory, dest, quiet=True).execute()
+
+                assert t.checkMatch(dest)
+
+            assert output.getvalue() == '', "Nothing should go to output if quiet"
