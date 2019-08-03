@@ -1,17 +1,18 @@
 trigger:
 - master
 
-strategy:
-  matrix:
-    linux:
-      imageName: 'ubuntu-latest'
-    mac:
-      imageName: 'macOS-latest'
-    windows:
-      imageName: 'windows-latest'
+jobs:
+- job: Linux
+  pool:
+    vmImage: 'ubuntu-latest'
+- job: macOS
+  pool:
+    vmImage: 'macOS-latest'
+- job: Windows
+  pool:
+    vmImage: 'windows-latest'
+  steps:
 
-pool:
-  name: $(imageName)
 steps:
 - task: UsePythonVersion@0
   displayName: 'Use Python 3.7'
