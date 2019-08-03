@@ -37,7 +37,7 @@ pycopier SourceDir DestinationDir <optional params>
   / /_/ / / / / /   / __ \/ __ \/ / _ \/ ___/
  / ____/ /_/ / /___/ /_/ / /_/ / /  __/ /
 /_/    \__, /\____/\____/ .___/_/\___/_/
-      /____/           /_/                   1.0.0 
+      /____/           /_/                   1.0.0
 
  ... a Python 3 replacement for Robocopy, including multithreaded copy.
 
