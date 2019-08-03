@@ -26,7 +26,7 @@ setup(
         'Programming Language :: Python :: 3.6',
     ],
     include_package_data = True,
-    install_requires=['scandir', 'humanize'],
+    install_requires=['scandir', 'humanize', 'pytest'],
     entry_points={
         'console_scripts': [
             'pycopier = pycopier.__main__:main',
