@@ -1,0 +1,33 @@
+trigger:
+- master
+
+strategy:
+  matrix:
+    linux:
+      imageName: 'ubuntu-16.04'
+    mac:
+      imageName: 'macos-10.13'
+    windows:
+      imageName: 'vs2017-win2016'
+
+pool:
+  name: $(imageName)
+steps:
+- task: UsePythonVersion@0
+  displayName: 'Use Python 3.7'
+  inputs:
+    versionSpec: 3.7
+
+- script: 'python -m pip install .'
+  displayName: 'Run Pip Install'
+
+- script: 'python -m pytest -v tests.py  --junitxml=test_results.xml'
+  workingDirectory: pycopier/tests
+  displayName: 'Run Pytest'
+
+- task: PublishTestResults@2
+  displayName: 'Publish Test Results **/test_results*.xml'
+  inputs:
+    testResultsFiles: '**/test_results*.xml'
+
+
