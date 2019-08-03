@@ -67,3 +67,7 @@ PyCopier Arguments:
 
   /quiet       If set, be completely quiet during execution.
 ```
+
+# Development
+
+All development happens off of the master branch (or PRs to master). Once a 'release' is needed, versions, etc. will be updated in the master branch, tagged, and merged to the release branch. Nothing should be in the release branch that hasn't already been in the master branch.
