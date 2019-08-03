@@ -193,7 +193,7 @@ class PyCopier(object):
         for root, dirs, files in walk(self.source):
             self.checkAndPrintSpeedIfNeeded()
 
-            destDir = os.path.join(self.destination, os.path.relpath(root, self.source))
+            destDir = os.path.abspath(os.path.join(self.destination, os.path.relpath(root, self.source)))
 
             if self.purgeDestination:
                 results.append(self.pool.apply_async(self._cleanDestinationDirectory, (destDir, set(files + dirs),)))
