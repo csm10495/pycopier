@@ -12,6 +12,10 @@ To install, clone down and in the top pycopier directory run:
 ```
 python -m pip install .
 ```
+or
+```
+python -m pip install pycopier
+```
 
 # Simple Usage
 
@@ -19,9 +23,9 @@ After install, you can run via  ...
 
 ```
 python -m pycopier SourceDir DestinationDir <optional params>
-
-# or 
-
+```
+or
+```
 pycopier SourceDir DestinationDir <optional params>
 ```
 
