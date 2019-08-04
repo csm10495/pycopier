@@ -1,5 +1,5 @@
 # PyCopier
-[![Build status](https://csm10495.visualstudio.com/pycopier/_apis/build/status/pycopier-CI)](https://csm10495.visualstudio.com/pycopier/_build/latest?definitionId=5)
+[![Build status](https://csm10495.visualstudio.com/pycopier/_apis/build/status/pycopier-CI)](https://csm10495.visualstudio.com/pycopier/_build/latest?definitionId=5) [![PyPI version](https://badge.fury.io/py/pycopier.svg)](https://badge.fury.io/py/pycopier)
 
 Supports Python 3.6 and later. If it doesn't work with your Python version, feel free to submit a PR. PRs are welcome!
 
