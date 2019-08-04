@@ -22,7 +22,7 @@ with warnings.catch_warnings():
 
 from scandir import walk
 
-__version__ = '1.0.0'
+__version__ = '1.1.0'
 
 ASCII_ART = r'''
     ____        ______            _
@@ -190,38 +190,63 @@ class PyCopier(object):
 
         results = []
 
-        for root, dirs, files in walk(self.source):
-            self.checkAndPrintSpeedIfNeeded()
+        if os.path.isdir(self.source):
+            for root, dirs, files in walk(self.source):
+                self.checkAndPrintSpeedIfNeeded()
 
-            destDir = os.path.abspath(os.path.join(self.destination, os.path.relpath(root, self.source)))
+                destDir = os.path.abspath(os.path.join(self.destination, os.path.relpath(root, self.source)))
 
-            if self.purgeDestination:
-                results.append(self.pool.apply_async(self._cleanDestinationDirectory, (destDir, set(files + dirs),)))
+                if self.purgeDestination:
+                    results.append(self.pool.apply_async(self._cleanDestinationDirectory, (destDir, set(files + dirs),)))
 
-            if len(files) == 0 and len(dirs) == 0 and self.ignoreEmptyDirectories:
-                continue
+                if len(files) == 0 and len(dirs) == 0 and self.ignoreEmptyDirectories:
+                    continue
 
+                try:
+                    os.mkdir(destDir)
+                except OSError:
+                    pass
+
+                # todo... thread out this?
+                if self.copyPermissions:
+                    try:
+                        shutil.copystat(root, destDir)
+                    except:
+                        ''' todo: why does this happen?
+                        FileNotFoundError: [WinError 2] The system cannot find the file specified: 'E:\\csm10495\\AppData\\Local\\Packages\\CanonicalGroupLimited.UbuntuonWindows_79rhkp1fndgsc\\LocalState\\rootfs\\home\\csm10495\\cling-build\\cling-src\\tools\\clang\\test\\Driver\\Inputs\\gentoo_linux_gcc_multi_version_tree\\usr\\lib\\gcc\\x86_64-pc-linux-gnu\\4.9.3\\32'
+                        '''
+                        if not self.ignoreErrorOnCopy:
+                            raise
+
+                for file in files:
+                    fullSrcPath = os.path.join(root, file)
+                    destFile = os.path.join(destDir, file)
+                    results.append(self.pool.apply_async(self._copyFile, (fullSrcPath, destFile,)))
+                    # todo... what if results is really long? Should we clear them as we go?
+        elif os.path.isfile(self.source):
+            # single file. Submit a single submission for it.
+
+            # if the destination is a dir, put the file (with the current basename) in the destination.
+            if os.path.isdir(self.destination):
+                destFile = os.path.join(self.destination, os.path.basename(self.source))
+            else:
+                destFile = self.destination
+
+            # ensure output directory exists
+            destDir = os.path.dirname(destFile)
             try:
                 os.mkdir(destDir)
             except OSError:
                 pass
 
-            # todo... thread out this?
-            if self.copyPermissions:
-                try:
-                    shutil.copystat(root, destDir)
-                except:
-                    ''' todo: why does this happen?
-                    FileNotFoundError: [WinError 2] The system cannot find the file specified: 'E:\\csm10495\\AppData\\Local\\Packages\\CanonicalGroupLimited.UbuntuonWindows_79rhkp1fndgsc\\LocalState\\rootfs\\home\\csm10495\\cling-build\\cling-src\\tools\\clang\\test\\Driver\\Inputs\\gentoo_linux_gcc_multi_version_tree\\usr\\lib\\gcc\\x86_64-pc-linux-gnu\\4.9.3\\32'
-                    '''
-                    if not self.ignoreErrorOnCopy:
-                        raise
+            results.append(self.pool.apply_async(self._copyFile, (self.source, destFile,)))
 
-            for file in files:
-                fullSrcPath = os.path.join(root, file)
-                destFile = os.path.join(destDir, file)
-                results.append(self.pool.apply_async(self._copyFile, (fullSrcPath, destFile,)))
-                # todo... what if results is really long? Should we clear them as we go?
+            if self.purgeDestination:
+                # delete everything in destination other than this new file
+                results.append(self.pool.apply_async(self._cleanDestinationDirectory, (destDir, [os.path.basename(destFile)],)))
+
+        else:
+            raise ValueError("%s is not a directory or file path" % self.source)
 
         if not self.quiet:
             sys.stdout.write("\rOperation submission complete!              \n")
@@ -263,7 +288,9 @@ class PyCopier(object):
         self.pool.join()
 
         if self.move:
-            shutil.rmtree(self.source)
+            if os.path.isdir(self.source):
+                shutil.rmtree(self.source)
+            # if we did a file, it would have been deleted already by _copyFile
 
         self._done = True
 

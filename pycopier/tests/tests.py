@@ -15,7 +15,6 @@ from pycopier.pycopier import PyCopier
 
 THIS_DIRECTORY = os.path.abspath(os.path.dirname(__file__))
 
-
 class _TestDirectory(object):
     '''
     quick object used to generate a directory of files/folders for copying
@@ -279,3 +278,51 @@ class PyCopierFunctionalTests(unittest.TestCase, PyCopierTestBase):
                 assert t.checkMatch(dest)
 
             assert output.getvalue() == '', "Nothing should go to output if quiet"
+
+    def test_copy_single_file(self):
+        with self.getNewDestination() as dest:
+            p = PyCopier(source=__file__, destination=dest)
+            p.execute()
+            assert p.getCopiedDataBytes() == os.path.getsize(__file__)
+            assert filecmp.cmp(__file__, dest, shallow=False)
+
+    def test_copy_single_file_into_dir(self):
+        with self.getNewDestination() as dest:
+            os.mkdir(dest)
+
+            p = PyCopier(source=__file__, destination=dest)
+            p.execute()
+            assert p.getCopiedDataBytes() == os.path.getsize(__file__)
+            assert filecmp.cmp(__file__, os.path.join(dest, os.path.basename(__file__)), shallow=False)
+
+    def test_copy_single_file_into_dir_and_purge(self):
+        with self.getNewDestination() as dest:
+            os.mkdir(dest)
+            TEST_PATH = os.path.join(dest, 'test')
+            with open(TEST_PATH, 'wb') as f:
+                f.write(b'abc' * 10)
+
+            p = PyCopier(source=__file__, destination=dest, purgeDestination=True)
+            p.execute()
+
+            assert p.getCopiedDataBytes() == os.path.getsize(__file__)
+            assert filecmp.cmp(__file__, os.path.join(dest, os.path.basename(__file__)), shallow=False)
+            assert not os.path.exists(TEST_PATH)
+
+    def test_copy_single_file_with_move(self):
+        with open(__file__, 'rb') as f:
+            fileData = f.read()
+
+        try:
+            with self.getNewDestination() as dest:
+                p = PyCopier(source=__file__, destination=dest, move=True)
+                p.execute()
+                assert p.getCopiedDataBytes() == len(fileData)
+                with open(dest, 'rb') as f:
+                    newFileData = f.read()
+
+                assert fileData == newFileData
+                assert not os.path.exists(__file__)
+        finally:
+            with open(__file__, 'wb') as f:
+                f.write(fileData)
