@@ -23,7 +23,7 @@ with warnings.catch_warnings():
 
 from scandir import walk
 
-__version__ = '1.1.0'
+__version__ = '1.2.0'
 
 ASCII_ART = r'''
     ____        ______            _
