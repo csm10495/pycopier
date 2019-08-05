@@ -1,7 +1,7 @@
 # PyCopier
 [![Build status](https://csm10495.visualstudio.com/pycopier/_apis/build/status/pycopier-CI)](https://csm10495.visualstudio.com/pycopier/_build/latest?definitionId=5)
 
-Supports Python 3.6 and later. If it doesn't work with your Python version, feel free to submit a PR. PRs are welcome!
+Supports Python 2.7/3.5 and later. If it doesn't work with your Python version, feel free to submit a PR. PRs are welcome!
 
 A Python-based multi-threaded directory copier. This was created in the spirit of wanting to give a cross-platform way of doing a multi-threaded copy, in a way similar to Microsoft's Robocopy. Some params are implemented similarly to parameters of the same name from Robocopy. (Simple Robocopy calls may work with PyCopier by replacing robocopy.exe with pycopier.)
 
@@ -39,7 +39,7 @@ pycopier SourceDir DestinationDir <optional params>
 /_/    \__, /\____/\____/ .___/_/\___/_/
       /____/           /_/
 
- ... a Python 3 replacement for Robocopy, including multithreaded copy.
+ ... a Python replacement for Robocopy, including multithreaded copy.
 
 optional arguments:
   /h, //help   show this help message and exit

@@ -5,6 +5,7 @@ Brief:
 Author(s):
     Charles Machalow (MIT License)
 '''
+import decimal
 import os
 import re
 import shutil
@@ -85,6 +86,27 @@ class PyCopier(object):
 
         return retStr
 
+    @classmethod
+    def statMatch(cls, srcStat, destStat):
+        if srcStat.st_size != destStat.st_size:
+            return False
+
+        # In Python 2, certain timestamps tend to not be precise. Not quite sure why.
+        if sys.version_info.major == 2:
+            def coerce(num):
+                return int(num)
+
+            if (coerce(srcStat.st_mtime) != coerce(destStat.st_mtime)) or \
+                (coerce(srcStat.st_atime) != coerce(destStat.st_atime)):
+                return False
+        else:
+            # In Python 3, we seem to always have the same granularity
+            if (srcStat.st_mtime != destStat.st_mtime or \
+                srcStat.st_atime != destStat.st_atime):
+                return False
+
+        return True
+
     def _copyFile(self, source, destination):
         copiedDataLength = 0
 
@@ -96,7 +118,7 @@ class PyCopier(object):
                 pass
             else:
                 statSource = os.stat(source)
-                if statSource.st_size == statDest.st_size and statSource.st_mtime == statDest.st_mtime:
+                if self.statMatch(statSource, statDest):
                     # skip!
                     self.addToSkippedCopies(1)
                     return

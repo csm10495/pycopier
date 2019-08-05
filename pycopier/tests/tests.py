@@ -15,6 +15,11 @@ from pycopier.pycopier import PyCopier
 
 THIS_DIRECTORY = os.path.abspath(os.path.dirname(__file__))
 
+if sys.version_info.major == 2:
+    import contextlib2
+    contextlib.redirect_stderr = contextlib2.redirect_stderr
+    contextlib.redirect_stdout = contextlib2.redirect_stdout
+
 class _TestDirectory(object):
     '''
     quick object used to generate a directory of files/folders for copying
@@ -109,12 +114,9 @@ class _TestDirectory(object):
                         leftStat = os.stat(left)
                         rightStat = os.stat(right)
 
-                        if leftStat.st_mode != rightStat.st_mode or \
-                            leftStat.st_mtime != rightStat.st_mtime or \
-                            leftStat.st_atime  != rightStat.st_atime:
+                        if not PyCopier.statMatch(leftStat, rightStat):
                             print ("Permission mismatch: \n%s\n%s\n don't match" % (left, right))
                             return False
-
 
             for name, dirCmp in dirCmpObject.subdirs.items():
                 # move must always be False in nested scenarios, since we would have already recreated the src

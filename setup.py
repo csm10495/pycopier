@@ -1,5 +1,6 @@
 from setuptools import setup
 import os
+import sys
 
 THIS_FOLDER = os.path.abspath(os.path.dirname(__file__))
 
@@ -22,7 +23,7 @@ setup(
     version=getVersion(),
     packages=['pycopier'],
     license='MIT License',
-    python_requires='>=3.5',
+    python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*',
     long_description=open('README.md').read(),
     long_description_content_type="text/markdown",
     classifiers=[
@@ -31,13 +32,15 @@ setup(
         'Operating System :: POSIX',
         'Operating System :: Microsoft :: Windows',
         'Programming Language :: Python',
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
     ],
     include_package_data = True,
-    install_requires=['scandir', 'humanize', 'pytest'],
+    install_requires=['scandir', 'humanize', 'pytest'] + (['contextlib2'] if sys.version_info.major == 2 else []),
     entry_points={
         'console_scripts': [
             'pycopier = pycopier.__main__:main',
