@@ -91,13 +91,18 @@ class PyCopier(object):
         if srcStat.st_size != destStat.st_size:
             return False
 
-        # In Python 2, certain timestamps tend to not be precise. Not quite sure why.
+        # In Python 2, certain timestamps tend to not be precise.
+        # See https://stackoverflow.com/questions/17086426/file-modification-times-not-equal-after-calling-shutil-copystatfile1-file2-un
+        #  for more info.
         if sys.version_info.major == 2:
             def coerce(num):
+                # grossly inaccurate.
                 return int(num)
 
             if (coerce(srcStat.st_mtime) != coerce(destStat.st_mtime)) or \
                 (coerce(srcStat.st_atime) != coerce(destStat.st_atime)):
+                print ("src: %s" % srcStat.st_mtime)
+                print ("dest: %s" % destStat.st_mtime)
                 return False
         else:
             # In Python 3, we seem to always have the same granularity
