@@ -101,8 +101,6 @@ class PyCopier(object):
 
             if (coerce(srcStat.st_mtime) != coerce(destStat.st_mtime)) or \
                 (coerce(srcStat.st_atime) != coerce(destStat.st_atime)):
-                print ("src: %s" % srcStat.st_mtime)
-                print ("dest: %s" % destStat.st_mtime)
                 return False
         else:
             # In Python 3, we seem to always have the same granularity
